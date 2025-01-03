@@ -54,6 +54,10 @@
     .time {
       font-weight: bold;
     }
+    .details {
+      font-style: italic;
+      color: #555;
+    }
     .delete-button {
       background-color: #e74c3c;
       color: white;
@@ -87,37 +91,44 @@
     <div class="section">
       <h2>Dagens schema</h2>
       <ul id="routineList"></ul>
-      <button class="button" id="exportPDF">Exportera till PDF</button>
+      <button class="button" id="saveSchedule">Spara schema</button>
+      <button class="button" id="exportCalendar">Exportera till kalender</button>
+    </div>
+
+    <!-- Sparade scheman -->
+    <div class="section">
+      <h2>Sparade scheman</h2>
+      <ul id="savedSchedules"></ul>
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
   <script>
     const activities = {
       low: [
-        { time: "08:00", name: "Matning", type: "Matning" },
-        { time: "10:00", name: "Kort promenad", type: "Promenad" },
-        { time: "14:00", name: "Lätt lek", type: "Lek" },
-        { time: "18:00", name: "Matning", type: "Matning" },
-        { time: "20:30", name: "Vila", type: "Vila" },
+        { time: "08:00", name: "Matning", type: "Matning", details: "Morgonmål för lugn start." },
+        { time: "10:00", name: "Kort promenad", type: "Promenad", details: "Avkopplande promenad i närområdet." },
+        { time: "14:00", name: "Lätt lek", type: "Lek", details: "Lek med boll inomhus." },
+        { time: "18:00", name: "Matning", type: "Matning", details: "Kvällsmål innan vila." },
+        { time: "20:30", name: "Vila", type: "Vila", details: "Avslappning med mys i soffan." },
       ],
       medium: [
-        { time: "07:30", name: "Matning", type: "Matning" },
-        { time: "09:00", name: "Promenad", type: "Promenad" },
-        { time: "13:00", name: "Lek", type: "Lek" },
-        { time: "17:30", name: "Promenad", type: "Promenad" },
-        { time: "19:00", name: "Matning", type: "Matning" },
+        { time: "07:30", name: "Matning", type: "Matning", details: "Lätt frukost för att starta dagen." },
+        { time: "09:00", name: "Promenad", type: "Promenad", details: "Längre promenad i skogen." },
+        { time: "13:00", name: "Lek", type: "Lek", details: "Aktiv lek utomhus." },
+        { time: "17:30", name: "Promenad", type: "Promenad", details: "Kvällspromenad med träning." },
+        { time: "19:00", name: "Matning", type: "Matning", details: "Middag innan vila." },
       ],
       high: [
-        { time: "07:00", name: "Matning", type: "Matning" },
-        { time: "08:00", name: "Långpromenad", type: "Promenad" },
-        { time: "12:00", name: "Intensiv lek", type: "Lek" },
-        { time: "16:00", name: "Träning", type: "Lek" },
-        { time: "18:30", name: "Matning", type: "Matning" },
+        { time: "07:00", name: "Matning", type: "Matning", details: "Energi för en aktiv dag." },
+        { time: "08:00", name: "Långpromenad", type: "Promenad", details: "Intensiv promenad i naturen." },
+        { time: "12:00", name: "Intensiv lek", type: "Lek", details: "Högaktiv lek med agility." },
+        { time: "16:00", name: "Träning", type: "Lek", details: "Freestyleträning med tricks." },
+        { time: "18:30", name: "Matning", type: "Matning", details: "Avslutande måltid." },
       ],
     };
 
     const routineList = document.querySelector("#routineList");
+    const savedSchedules = document.querySelector("#savedSchedules");
 
     // Generera anpassat schema
     document.querySelector("#generateCustomSchedule").addEventListener("click", () => {
@@ -129,12 +140,11 @@
         const listItem = document.createElement("li");
         listItem.innerHTML = `
           <span class="time">${activity.time}</span> - ${activity.name} (${activity.type})
+          <span class="details">${activity.details}</span>
           <button class="delete-button" onclick="deleteActivity(this)">Ta bort</button>
         `;
         routineList.appendChild(listItem);
       });
-
-      scheduleNotifications(selectedActivities);
     });
 
     // Ta bort aktivitet
@@ -143,42 +153,45 @@
       routineList.removeChild(listItem);
     }
 
-    // Pushnotiser
-    function scheduleNotifications(activities) {
-      if ("Notification" in window && Notification.permission === "granted") {
-        activities.forEach(activity => {
-          const [hours, minutes] = activity.time.split(":");
-          const now = new Date();
-          const activityTime = new Date();
-          activityTime.setHours(hours, minutes, 0);
-
-          const timeUntilNotification = activityTime - now;
-          if (timeUntilNotification > 0) {
-            setTimeout(() => {
-              new Notification("Påminnelse", {
-                body: `Dags för ${activity.name}!`,
-              });
-            }, timeUntilNotification);
-          }
-        });
-      } else if ("Notification" in window) {
-        Notification.requestPermission();
+    // Spara schema
+    document.querySelector("#saveSchedule").addEventListener("click", () => {
+      const schedule = Array.from(routineList.children).map(item => item.textContent.replace("Ta bort", "").trim());
+      if (schedule.length > 0) {
+        const scheduleItem = document.createElement("li");
+        scheduleItem.textContent = `Sparat schema (${new Date().toLocaleString()})`;
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Radera";
+        deleteButton.classList.add("delete-button");
+        deleteButton.addEventListener("click", () => savedSchedules.removeChild(scheduleItem));
+        scheduleItem.appendChild(deleteButton);
+        savedSchedules.appendChild(scheduleItem);
       }
-    }
-
-    // Exportera till PDF
-    document.querySelector("#exportPDF").addEventListener("click", () => {
-      const doc = new jsPDF();
-      doc.text("Dagens schema", 10, 10);
-      let y = 20;
-
-      Array.from(routineList.children).forEach(item => {
-        doc.text(item.textContent.replace("Ta bort", "").trim(), 10, y);
-        y += 10;
-      });
-
-      doc.save("dagens_schema.pdf");
     });
+
+    // Exportera till kalender
+    document.querySelector("#exportCalendar").addEventListener("click", () => {
+      let calendarData = "BEGIN:VCALENDAR\nVERSION:2.0\n";
+      Array.from(routineList.children).forEach(item => {
+        const time = item.querySelector(".time").textContent;
+        const details = item.querySelector(".details").textContent;
+        calendarData += `BEGIN:VEVENT\nSUMMARY:${item.textContent}\nDESCRIPTION:${details}\nDTSTART;TZID=Europe/Stockholm:${formatTimeToCalendar(time)}\nEND:VEVENT\n`;
+      });
+      calendarData += "END:VCALENDAR";
+
+      const blob = new Blob([calendarData], { type: "text/calendar" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "schema.ics";
+      a.click();
+    });
+
+    function formatTimeToCalendar(time) {
+      const [hours, minutes] = time.split(":");
+      const now = new Date();
+      now.setHours(hours, minutes, 0);
+      return now.toISOString().replace(/[-:]/g, "").split(".")[0];
+    }
   </script>
 </body>
 </html>
