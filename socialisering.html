@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dagens Träningsprogram</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    p {
+      text-align: center;
+      margin: 10px 0;
+    }
+    select, .button {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+    .button {
+      background-color: #3498db;
+      color: white;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #2980b9;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      text-align: left;
+      padding: 8px;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    #timer {
+      text-align: center;
+      font-size: 24px;
+      margin-top: 20px;
+      color: #e74c3c;
+    }
+
+    /* Mobilanpassning */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 20px;
+      }
+      table {
+        font-size: 12px;
+      }
+      th, td {
+        padding: 6px;
+      }
+      .button {
+        font-size: 14px;
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dagens Träningsprogram</h1>
+    <p>Välj en kategori och passlängd för att generera dagens träningsprogram. Starta timern för varje övning.</p>
+    <select id="categorySelect">
+      <option value="random">Slumpmässig kategori</option>
+      <option value="Kontaktövningar">Kontaktövningar</option>
+      <option value="Miljöträning">Miljöträning</option>
+      <option value="Freestyle">Freestyle</option>
+      <option value="Vallning">Vallning</option>
+      <option value="Lugn och ro">Lugn och ro</option>
+    </select>
+    <button class="button" onclick="generateTodayProgram(15)">15 minuter</button>
+    <button class="button" onclick="generateTodayProgram(60)">1 timme</button>
+    <button class="button" onclick="generateTodayProgram(120)">2 timmar</button>
+    <table id="trainingTable">
+      <thead>
+        <tr>
+          <th>Tid</th>
+          <th>Kategori</th>
+          <th>Övning</th>
+          <th>Timer</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div id="timer">Timer: 00:00</div>
+  </div>
+
+  <script>
+    const exercises = {
+      "Kontaktövningar": ["Ögonkontakt", "Följsamhet vid sidan", "Namnkall"],
+      "Miljöträning": ["Gå på olika underlag", "Möta andra hundar", "Höga ljudträning"],
+      "Freestyle": ["Snurra", "Backa", "Hoppa genom ring"],
+      "Vallning": ["Följa fållan", "Stoppkommando", "Hämta flocken"],
+      "Lugn och ro": ["Ligga på filt", "Avslappning med handpåläggning", "Andningsträning"]
+    };
+
+    let timerInterval;
+
+    function generateTodayProgram(durationMinutes) {
+      const tableBody = document.querySelector("#trainingTable tbody");
+      tableBody.innerHTML = "";
+
+      const categorySelect = document.getElementById("categorySelect").value;
+      const selectedCategory = categorySelect === "random" ? getRandomKey(exercises) : categorySelect;
+
+      const totalBlocks = Math.ceil(durationMinutes / 15);
+      let currentTime = "10:00";
+
+      for (let i = 0; i < totalBlocks; i++) {
+        const exercise = getRandomElement(exercises[selectedCategory]);
+        const endTime = addMinutesToTime(currentTime, 15);
+
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${currentTime} - ${endTime}</td>
+          <td>${selectedCategory}</td>
+          <td>${exercise}</td>
+          <td><button class="button" onclick="startTimer()">Starta Timer</button></td>
+        `;
+        tableBody.appendChild(row);
+
+        currentTime = endTime;
+      }
+    }
+
+    function getRandomKey(obj) {
+      const keys = Object.keys(obj);
+      return keys[Math.floor(Math.random() * keys.length)];
+    }
+
+    function getRandomElement(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function addMinutesToTime(time, minutes) {
+      const [hour, minute] = time.split(":").map(Number);
+      const totalMinutes = hour * 60 + minute + minutes;
+      const newHour = Math.floor(totalMinutes / 60);
+      const newMinute = totalMinutes % 60;
+      return `${newHour.toString().padStart(2, "0")}:${newMinute.toString().padStart(2, "0")}`;
+    }
+
+    function startTimer() {
+      clearInterval(timerInterval);
+      const timerDisplay = document.getElementById("timer");
+      let remainingTime = 15 * 60;
+
+      timerInterval = setInterval(() => {
+        const minutes = Math.floor(remainingTime / 60);
+        const seconds = remainingTime % 60;
+        timerDisplay.textContent = `Timer: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+
+        if (remainingTime <= 0) {
+          clearInterval(timerInterval);
+          timerDisplay.textContent = "Tiden är slut! Bra jobbat!";
+          alert("Tiden är slut! Gå vidare till nästa övning.");
+        } else {
+          remainingTime--;
+        }
+      }, 1000);
+    }
+  </script>
+</body>
+</html>
