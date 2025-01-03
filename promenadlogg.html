@@ -55,6 +55,14 @@
     th {
       background-color: #f4f4f4;
     }
+    textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
   </style>
 </head>
 <body>
@@ -63,6 +71,7 @@
     <button class="button" id="startWalkButton" onclick="startWalk()">Starta Promenad</button>
     <button class="button" id="stopWalkButton" onclick="stopWalk()" disabled>Stoppa Promenad</button>
     <div id="currentWalk"></div>
+    <textarea id="notes" placeholder="Lägg till anteckningar om promenaden (frivilligt)"></textarea>
     <div class="log-section">
       <h2>Historik</h2>
       <table id="walkLog">
@@ -72,6 +81,9 @@
             <th>Starttid</th>
             <th>Sluttid</th>
             <th>Varaktighet</th>
+            <th>Avstånd (km)</th>
+            <th>Anteckningar</th>
+            <th>Dela</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -82,19 +94,41 @@
   <script>
     let walkStartTime = null;
     let walkEndTime = null;
+    let totalDistance = 0;
+    let watchId = null;
+    let notes = "";
     const walkLogTable = document.getElementById("walkLog").querySelector("tbody");
     const currentWalkDisplay = document.getElementById("currentWalk");
 
+    // Start promenad
     function startWalk() {
       walkStartTime = new Date();
+      totalDistance = 0;
+      notes = "";
       document.getElementById("startWalkButton").disabled = true;
       document.getElementById("stopWalkButton").disabled = false;
       currentWalkDisplay.textContent = `Promenad påbörjad: ${walkStartTime.toLocaleTimeString()}`;
+
+      // Start GPS-spårning
+      if (navigator.geolocation) {
+        watchId = navigator.geolocation.watchPosition(updatePosition, showError, {
+          enableHighAccuracy: true,
+          maximumAge: 0
+        });
+      } else {
+        alert("Geolocation stöds inte av denna enhet.");
+      }
     }
 
+    // Stoppa promenad
     function stopWalk() {
       walkEndTime = new Date();
       const duration = calculateDuration(walkStartTime, walkEndTime);
+      notes = document.getElementById("notes").value;
+
+      if (navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchId);
+      }
 
       // Lägg till i historiken
       const row = document.createElement("tr");
@@ -103,6 +137,9 @@
         <td>${walkStartTime.toLocaleTimeString()}</td>
         <td>${walkEndTime.toLocaleTimeString()}</td>
         <td>${duration}</td>
+        <td>${totalDistance.toFixed(2)}</td>
+        <td>${notes || "Ingen anteckning"}</td>
+        <td><button class="button" onclick="shareWalk('${duration}', '${totalDistance.toFixed(2)}')">Dela</button></td>
       `;
       walkLogTable.appendChild(row);
 
@@ -110,15 +147,57 @@
       walkStartTime = null;
       walkEndTime = null;
       currentWalkDisplay.textContent = "";
+      document.getElementById("notes").value = "";
       document.getElementById("startWalkButton").disabled = false;
       document.getElementById("stopWalkButton").disabled = true;
     }
 
+    // Uppdatera position och avstånd
+    function updatePosition(position) {
+      if (walkStartTime) {
+        const { latitude, longitude } = position.coords;
+        if (lastPosition) {
+          const distance = calculateDistance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
+          totalDistance += distance;
+        }
+        lastPosition = { latitude, longitude };
+      }
+    }
+
+    // Beräkna avstånd mellan två punkter (Haversine-formeln)
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371; // Jordens radie i km
+      const dLat = deg2rad(lat2 - lat1);
+      const dLon = deg2rad(lon2 - lon1);
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function deg2rad(deg) {
+      return deg * (Math.PI / 180);
+    }
+
+    // Visa GPS-fel
+    function showError(error) {
+      console.warn(`ERROR(${error.code}): ${error.message}`);
+    }
+
+    // Beräkna varaktighet
     function calculateDuration(start, end) {
       const diffMs = end - start;
       const minutes = Math.floor(diffMs / 60000);
       const seconds = Math.floor((diffMs % 60000) / 1000);
       return `${minutes} min ${seconds} sek`;
+    }
+
+    // Dela promenad
+    function shareWalk(duration, distance) {
+      const message = `Jag gick precis en promenad på ${distance} km som varade i ${duration}!`;
+      alert(`Dela detta på sociala medier: ${message}`);
     }
   </script>
 </body>
