@@ -3,214 +3,121 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>Logga in</title>
   <style>
-    /* Baslayout */
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f0f2f5;
+      font-family: Arial, sans-serif;
+      background-color: #f3f4f6;
       margin: 0;
       padding: 0;
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      min-height: 100vh;
+      height: 100vh;
     }
 
-    /* Header */
-    .dashboard-container {
+    .login-container {
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 30px;
+      max-width: 400px;
+      width: 100%;
       text-align: center;
-      margin: 20px 0;
     }
 
     h1 {
-      font-size: 1.8rem;
       color: #333333;
-    }
-
-    p {
-      font-size: 1rem;
-      color: #555555;
       margin-bottom: 20px;
     }
 
-    /* Meny */
-    .menu {
-      width: 90%;
-      max-width: 600px;
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    form {
+      display: flex;
+      flex-direction: column;
       gap: 15px;
     }
 
-    .menu a {
-      text-decoration: none;
-      color: #ffffff;
-      background-color: #0078d7;
-      padding: 15px;
-      font-size: 1rem;
+    label {
+      font-size: 14px;
       font-weight: bold;
-      text-align: center;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-    }
-
-    .menu a:hover {
-      background-color: #005bb5;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Logga ut-knappen */
-    button.logout {
-      margin: 20px 0;
-      padding: 8px 15px;
-      background-color: #f5f5f5;
+      text-align: left;
       color: #555555;
-      border: 1px solid #cccccc;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.3s ease;
     }
 
-    button.logout:hover {
-      background-color: #e0e0e0;
-      transform: scale(1.05);
-    }
-
-    /* Hundväxling */
-    .dog-selector {
-      margin: 20px 0;
-    }
-
-    .dog-selector select {
+    input {
       padding: 10px;
-      font-size: 1rem;
+      font-size: 16px;
       border: 1px solid #cccccc;
-      border-radius: 8px;
+      border-radius: 4px;
+      outline: none;
     }
 
-    /* Sammanställning */
-    .summary {
-      margin: 20px 0;
-      width: 90%;
-      max-width: 600px;
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      text-align: center;
+    input:focus {
+      border-color: #007bff;
     }
 
-    .summary h2 {
-      font-size: 1.5rem;
-      color: #333333;
-      margin-bottom: 20px;
+    button {
+      background-color: #007bff;
+      color: #ffffff;
+      font-size: 16px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s;
     }
 
-    .progress-bar-container {
-      background-color: #e0e0e0;
-      border-radius: 8px;
-      width: 100%;
-      height: 20px;
-      overflow: hidden;
-      margin: 10px 0;
+    button:hover {
+      background-color: #0056b3;
     }
 
-    .progress-bar {
-      height: 100%;
-      background-color: #0078d7;
-      transition: width 0.3s ease;
-    }
-
-    .motivation {
-      font-size: 1rem;
-      color: #0078d7;
-      margin-top: 20px;
-      font-weight: bold;
+    #errorMessage {
+      margin-top: 10px;
+      color: red;
     }
   </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    <h1>Välkommen till Träningssystem Bimslan</h1>
-    <p>Du är nu inloggad.</p>
-    <div class="dog-selector">
-      <label for="dogSelector">Välj Hund:</label>
-      <select id="dogSelector">
-        <option value="hund1">Work-a-lot Bim</option>
-        <option value="hund2">Alickra’s Look at Vespertilio</option>
-        <option value="hund3">Milla</option>
-        <option value="hund4">Winga</option>
-      </select>
-    </div>
-    <button class="logout" id="logoutButton">Logga ut</button>
-  </div>
-
-  <div class="menu">
-    <a href="monsterinlarning.html">Mönsterinlärning</a>
-    <a href="trickinlarning.html">Grundträning</a>
-    <a href="traningskalender.html">Kalender</a>
-    <a href="session.html">Träningslogg</a>
-    <a href="underhall.html">Tävlingslogg</a>
-    <a href="Traningsplaner.html">Målsättningar</a>
-      <a href="traningsgenerator.html">Generera träningspass</a>
-  </div>
-
-  <div class="summary">
-    <h2>Sammanställning för <span id="dogName">Work-a-lot Bim</span></h2>
-    <p id="ongoingGoals">Pågående mål: Laddar...</p>
-    <p id="completedGoals">Uppnådda mål: Laddar...</p>
-    <div class="progress-bar-container">
-      <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
-    </div>
-    <p id="progressPercentage">Framgång: Laddar...</p>
-    <p class="motivation" id="motivation">Håll igång träningen för fler framgångar!</p>
+  <div class="login-container">
+    <h1>Logga in</h1>
+    <form id="loginForm">
+      <label for="password">Lösenord:</label>
+      <input type="password" id="password" placeholder="Ange lösenord" required>
+      <button type="submit">Logga in</button>
+    </form>
+    <p id="errorMessage"></p>
   </div>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
-      const dogSelector = document.getElementById('dogSelector');
-      const dogName = document.getElementById('dogName');
-
-      // Initial laddning för vald hund
-      loadSummary('hund1');
-
-      // Vid byte av hund
-      dogSelector.addEventListener('change', () => {
-        const selectedDog = dogSelector.value;
-        dogName.textContent = dogSelector.options[dogSelector.selectedIndex].text;
-        loadSummary(selectedDog);
-      });
-
-      function loadSummary(dog) {
-        const goalsKey = `trainingGoals_${dog}`;
-        const achievedGoalsKey = `achievedGoals_${dog}`;
-        
-        const goals = JSON.parse(localStorage.getItem(goalsKey)) || [];
-        const achievedGoals = JSON.parse(localStorage.getItem(achievedGoalsKey)) || [];
-
-        const ongoingGoals = goals.length;
-        const completedGoals = achievedGoals.length;
-        const totalGoals = ongoingGoals + completedGoals;
-        const progress = totalGoals ? Math.round((completedGoals / totalGoals) * 100) : 0;
-
-        document.getElementById('ongoingGoals').textContent = `Pågående mål: ${ongoingGoals}`;
-        document.getElementById('completedGoals').textContent = `Uppnådda mål: ${completedGoals}`;
-        document.getElementById('progressBar').style.width = `${progress}%`;
-        document.getElementById('progressPercentage').textContent = `Framgång: ${progress}%`;
+      // Kontrollera om användaren redan är inloggad
+      const isLoggedIn = localStorage.getItem('isLoggedIn');
+      if (isLoggedIn) {
+        window.location.href = 'dashboard.html'; // Omdirigera till dashboard om inloggad
       }
+    });
 
-      document.getElementById('logoutButton').addEventListener('click', () => {
-        localStorage.removeItem('isLoggedIn');
-        window.location.href = 'index.html';
-      });
+    // Hantera inloggning
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const password = document.getElementById('password').value;
+      const correctPassword = 'hemlighet'; // Byt till ditt lösenord
+
+      if (password === correctPassword) {
+        // Spara inloggningsstatus i localStorage
+        localStorage.setItem('isLoggedIn', true);
+        // Omdirigera till dashboard.html
+        window.location.href = 'dashboard.html';
+      } else {
+        const errorMessage = document.getElementById('errorMessage');
+        errorMessage.textContent = 'Fel lösenord. Försök igen.';
+      }
     });
   </script>
+  
+  <!-- Lägg till Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.1.3/firebase-auth.js"></script>
 </body>
 </html>
