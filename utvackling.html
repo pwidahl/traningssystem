@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hundutvecklingsspårning</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      color: white;
+      background-color: #3498db;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #2980b9;
+    }
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      padding: 10px;
+      background: #f4f4f4;
+      margin: 5px 0;
+      border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .delete-button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .delete-button:hover {
+      background-color: #c0392b;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hundutvecklingsspårning</h1>
+
+    <!-- Hundväxling -->
+    <div class="section">
+      <h2>Välj hund</h2>
+      <select id="dogSelector" class="button">
+        <option value="Hund 1">Hund 1</option>
+        <option value="Hund 2">Hund 2</option>
+      </select>
+      <button class="button" id="addDogButton">Lägg till ny hund</button>
+    </div>
+
+    <!-- Träningslogg -->
+    <div class="section">
+      <h2>Träningslogg för <span id="currentDog">Hund 1</span></h2>
+      <form id="trainingForm">
+        <input type="text" id="trainingType" placeholder="Typ av träning (t.ex. freestyle)" required>
+        <input type="text" id="trainingDetails" placeholder="Detaljer om träningen" required>
+        <button class="button" type="submit">Lägg till träning</button>
+      </form>
+      <ul id="trainingLog"></ul>
+    </div>
+
+    <!-- Måluppföljning -->
+    <div class="section">
+      <h2>Måluppföljning för <span id="currentDogGoals">Hund 1</span></h2>
+      <form id="goalForm">
+        <input type="text" id="goalDescription" placeholder="Beskriv målet" required>
+        <button class="button" type="submit">Lägg till mål</button>
+      </form>
+      <ul id="goalList"></ul>
+    </div>
+  </div>
+
+  <script>
+    const dogs = {
+      "Hund 1": { trainingLog: [], goals: [] },
+      "Hund 2": { trainingLog: [], goals: [] },
+    };
+
+    const dogSelector = document.getElementById("dogSelector");
+    const currentDogLabel = document.getElementById("currentDog");
+    const currentDogGoalsLabel = document.getElementById("currentDogGoals");
+    const trainingLog = document.getElementById("trainingLog");
+    const goalList = document.getElementById("goalList");
+    let currentDog = dogSelector.value;
+
+    // Uppdatera aktuell hund
+    dogSelector.addEventListener("change", () => {
+      currentDog = dogSelector.value;
+      currentDogLabel.textContent = currentDog;
+      currentDogGoalsLabel.textContent = currentDog;
+      updateTrainingLog();
+      updateGoalList();
+    });
+
+    // Lägg till ny hund
+    document.getElementById("addDogButton").addEventListener("click", () => {
+      const newDogName = prompt("Ange namn för ny hund:");
+      if (newDogName && !dogs[newDogName]) {
+        dogs[newDogName] = { trainingLog: [], goals: [] };
+        const newOption = document.createElement("option");
+        newOption.value = newDogName;
+        newOption.textContent = newDogName;
+        dogSelector.appendChild(newOption);
+        dogSelector.value = newDogName;
+        dogSelector.dispatchEvent(new Event("change"));
+      }
+    });
+
+    // Lägg till träning
+    document.getElementById("trainingForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const type = document.getElementById("trainingType").value;
+      const details = document.getElementById("trainingDetails").value;
+
+      dogs[currentDog].trainingLog.push({ type, details });
+      updateTrainingLog();
+      event.target.reset();
+    });
+
+    function updateTrainingLog() {
+      trainingLog.innerHTML = "";
+      dogs[currentDog].trainingLog.forEach((entry, index) => {
+        const listItem = document.createElement("li");
+        listItem.innerHTML = `
+          ${entry.type}: ${entry.details}
+          <button class="delete-button" onclick="deleteTraining(${index})">Ta bort</button>
+        `;
+        trainingLog.appendChild(listItem);
+      });
+    }
+
+    function deleteTraining(index) {
+      dogs[currentDog].trainingLog.splice(index, 1);
+      updateTrainingLog();
+    }
+
+    // Lägg till mål
+    document.getElementById("goalForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const description = document.getElementById("goalDescription").value;
+
+      dogs[currentDog].goals.push({ description, achieved: false });
+      updateGoalList();
+      event.target.reset();
+    });
+
+    function updateGoalList() {
+      goalList.innerHTML = "";
+      dogs[currentDog].goals.forEach((goal, index) => {
+        const listItem = document.createElement("li");
+        listItem.innerHTML = `
+          ${goal.description} ${goal.achieved ? "(Uppnått)" : ""}
+          <button class="button" onclick="toggleGoal(${index})">${goal.achieved ? "Ångra" : "Markera som uppnått"}</button>
+          <button class="delete-button" onclick="deleteGoal(${index})">Ta bort</button>
+        `;
+        goalList.appendChild(listItem);
+      });
+    }
+
+    function toggleGoal(index) {
+      dogs[currentDog].goals[index].achieved = !dogs[currentDog].goals[index].achieved;
+      updateGoalList();
+    }
+
+    function deleteGoal(index) {
+      dogs[currentDog].goals.splice(index, 1);
+      updateGoalList();
+    }
+
+    // Initiera sidan
+    updateTrainingLog();
+    updateGoalList();
+  </script>
+</body>
+</html>
