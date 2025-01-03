@@ -71,51 +71,61 @@
   <div class="container">
     <h1>Daglig Rutinplanerare</h1>
 
-    <!-- Välj dagtyp -->
+    <!-- Anpassade scheman -->
     <div class="section">
-      <h2>Välj dagtyp</h2>
-      <select id="dayType" class="button">
-        <option value="weekday">Vardag</option>
-        <option value="weekend">Helg</option>
+      <h2>Anpassa schemat</h2>
+      <label for="activityLevel">Aktivitetsnivå:</label>
+      <select id="activityLevel" class="button">
+        <option value="low">Låg</option>
+        <option value="medium">Medel</option>
+        <option value="high">Hög</option>
       </select>
-      <button class="button" id="generateSchedule">Generera förslag</button>
+      <button class="button" id="generateCustomSchedule">Generera anpassat schema</button>
     </div>
 
     <!-- Dagens schema -->
     <div class="section">
       <h2>Dagens schema</h2>
       <ul id="routineList"></ul>
+      <button class="button" id="exportPDF">Exportera till PDF</button>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/jspdf"></script>
   <script>
-    const weekdayActivities = [
-      { time: "07:00", name: "Matning", type: "Matning" },
-      { time: "07:30", name: "Promenad", type: "Promenad" },
-      { time: "12:00", name: "Lek i trädgården", type: "Lek" },
-      { time: "17:00", name: "Promenad", type: "Promenad" },
-      { time: "18:00", name: "Matning", type: "Matning" },
-      { time: "20:30", name: "Vila i soffan", type: "Vila" },
-    ];
-
-    const weekendActivities = [
-      { time: "08:00", name: "Matning", type: "Matning" },
-      { time: "08:30", name: "Långpromenad", type: "Promenad" },
-      { time: "13:00", name: "Lek med andra hundar", type: "Lek" },
-      { time: "17:00", name: "Promenad", type: "Promenad" },
-      { time: "18:00", name: "Matning", type: "Matning" },
-      { time: "21:00", name: "Vila i soffan", type: "Vila" },
-    ];
+    const activities = {
+      low: [
+        { time: "08:00", name: "Matning", type: "Matning" },
+        { time: "10:00", name: "Kort promenad", type: "Promenad" },
+        { time: "14:00", name: "Lätt lek", type: "Lek" },
+        { time: "18:00", name: "Matning", type: "Matning" },
+        { time: "20:30", name: "Vila", type: "Vila" },
+      ],
+      medium: [
+        { time: "07:30", name: "Matning", type: "Matning" },
+        { time: "09:00", name: "Promenad", type: "Promenad" },
+        { time: "13:00", name: "Lek", type: "Lek" },
+        { time: "17:30", name: "Promenad", type: "Promenad" },
+        { time: "19:00", name: "Matning", type: "Matning" },
+      ],
+      high: [
+        { time: "07:00", name: "Matning", type: "Matning" },
+        { time: "08:00", name: "Långpromenad", type: "Promenad" },
+        { time: "12:00", name: "Intensiv lek", type: "Lek" },
+        { time: "16:00", name: "Träning", type: "Lek" },
+        { time: "18:30", name: "Matning", type: "Matning" },
+      ],
+    };
 
     const routineList = document.querySelector("#routineList");
 
-    // Generera schema
-    document.querySelector("#generateSchedule").addEventListener("click", () => {
-      const dayType = document.querySelector("#dayType").value;
-      const activities = dayType === "weekday" ? weekdayActivities : weekendActivities;
+    // Generera anpassat schema
+    document.querySelector("#generateCustomSchedule").addEventListener("click", () => {
+      const level = document.querySelector("#activityLevel").value;
+      const selectedActivities = activities[level];
 
       routineList.innerHTML = ""; // Rensa tidigare schema
-      activities.forEach(activity => {
+      selectedActivities.forEach(activity => {
         const listItem = document.createElement("li");
         listItem.innerHTML = `
           <span class="time">${activity.time}</span> - ${activity.name} (${activity.type})
@@ -123,6 +133,8 @@
         `;
         routineList.appendChild(listItem);
       });
+
+      scheduleNotifications(selectedActivities);
     });
 
     // Ta bort aktivitet
@@ -130,6 +142,43 @@
       const listItem = button.parentElement;
       routineList.removeChild(listItem);
     }
+
+    // Pushnotiser
+    function scheduleNotifications(activities) {
+      if ("Notification" in window && Notification.permission === "granted") {
+        activities.forEach(activity => {
+          const [hours, minutes] = activity.time.split(":");
+          const now = new Date();
+          const activityTime = new Date();
+          activityTime.setHours(hours, minutes, 0);
+
+          const timeUntilNotification = activityTime - now;
+          if (timeUntilNotification > 0) {
+            setTimeout(() => {
+              new Notification("Påminnelse", {
+                body: `Dags för ${activity.name}!`,
+              });
+            }, timeUntilNotification);
+          }
+        });
+      } else if ("Notification" in window) {
+        Notification.requestPermission();
+      }
+    }
+
+    // Exportera till PDF
+    document.querySelector("#exportPDF").addEventListener("click", () => {
+      const doc = new jsPDF();
+      doc.text("Dagens schema", 10, 10);
+      let y = 20;
+
+      Array.from(routineList.children).forEach(item => {
+        doc.text(item.textContent.replace("Ta bort", "").trim(), 10, y);
+        y += 10;
+      });
+
+      doc.save("dagens_schema.pdf");
+    });
   </script>
 </body>
 </html>
