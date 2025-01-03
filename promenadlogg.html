@@ -63,6 +63,35 @@
       border-radius: 5px;
       border: 1px solid #ddd;
     }
+    .delete-button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .delete-button:hover {
+      background-color: #c0392b;
+    }
+
+    /* Mobilanpassning */
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 20px;
+      }
+      .button {
+        font-size: 14px;
+        padding: 8px;
+      }
+      textarea {
+        font-size: 12px;
+      }
+      table th, table td {
+        font-size: 12px;
+        padding: 6px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -74,6 +103,7 @@
     <textarea id="notes" placeholder="Lägg till anteckningar om promenaden (frivilligt)"></textarea>
     <div class="log-section">
       <h2>Historik</h2>
+      <button class="button" onclick="clearAllHistory()">Rensa all historik</button>
       <table id="walkLog">
         <thead>
           <tr>
@@ -83,7 +113,7 @@
             <th>Varaktighet</th>
             <th>Avstånd (km)</th>
             <th>Anteckningar</th>
-            <th>Dela</th>
+            <th>Ta bort</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -100,7 +130,6 @@
     const walkLogTable = document.getElementById("walkLog").querySelector("tbody");
     const currentWalkDisplay = document.getElementById("currentWalk");
 
-    // Start promenad
     function startWalk() {
       walkStartTime = new Date();
       totalDistance = 0;
@@ -109,7 +138,6 @@
       document.getElementById("stopWalkButton").disabled = false;
       currentWalkDisplay.textContent = `Promenad påbörjad: ${walkStartTime.toLocaleTimeString()}`;
 
-      // Start GPS-spårning
       if (navigator.geolocation) {
         watchId = navigator.geolocation.watchPosition(updatePosition, showError, {
           enableHighAccuracy: true,
@@ -120,7 +148,6 @@
       }
     }
 
-    // Stoppa promenad
     function stopWalk() {
       walkEndTime = new Date();
       const duration = calculateDuration(walkStartTime, walkEndTime);
@@ -130,7 +157,6 @@
         navigator.geolocation.clearWatch(watchId);
       }
 
-      // Lägg till i historiken
       const row = document.createElement("tr");
       row.innerHTML = `
         <td>${walkStartTime.toLocaleDateString()}</td>
@@ -139,11 +165,10 @@
         <td>${duration}</td>
         <td>${totalDistance.toFixed(2)}</td>
         <td>${notes || "Ingen anteckning"}</td>
-        <td><button class="button" onclick="shareWalk('${duration}', '${totalDistance.toFixed(2)}')">Dela</button></td>
+        <td><button class="delete-button" onclick="deleteWalk(this)">Ta bort</button></td>
       `;
       walkLogTable.appendChild(row);
 
-      // Återställ
       walkStartTime = null;
       walkEndTime = null;
       currentWalkDisplay.textContent = "";
@@ -152,7 +177,6 @@
       document.getElementById("stopWalkButton").disabled = true;
     }
 
-    // Uppdatera position och avstånd
     function updatePosition(position) {
       if (walkStartTime) {
         const { latitude, longitude } = position.coords;
@@ -164,9 +188,8 @@
       }
     }
 
-    // Beräkna avstånd mellan två punkter (Haversine-formeln)
     function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371; // Jordens radie i km
+      const R = 6371;
       const dLat = deg2rad(lat2 - lat1);
       const dLon = deg2rad(lon2 - lon1);
       const a =
@@ -181,12 +204,10 @@
       return deg * (Math.PI / 180);
     }
 
-    // Visa GPS-fel
     function showError(error) {
       console.warn(`ERROR(${error.code}): ${error.message}`);
     }
 
-    // Beräkna varaktighet
     function calculateDuration(start, end) {
       const diffMs = end - start;
       const minutes = Math.floor(diffMs / 60000);
@@ -194,10 +215,13 @@
       return `${minutes} min ${seconds} sek`;
     }
 
-    // Dela promenad
-    function shareWalk(duration, distance) {
-      const message = `Jag gick precis en promenad på ${distance} km som varade i ${duration}!`;
-      alert(`Dela detta på sociala medier: ${message}`);
+    function deleteWalk(button) {
+      const row = button.parentElement.parentElement;
+      walkLogTable.removeChild(row);
+    }
+
+    function clearAllHistory() {
+      walkLogTable.innerHTML = "";
     }
   </script>
 </body>
