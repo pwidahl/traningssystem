@@ -12,21 +12,22 @@
       background-color: #f9f9f9;
     }
     .container {
-      max-width: 600px;
-      margin: 20px auto;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 10px;
       background: #fff;
-      padding: 20px;
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
     h1 {
       text-align: center;
       color: #2c3e50;
+      font-size: 22px;
     }
     .button {
       display: block;
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin: 10px 0;
       font-size: 16px;
       border-radius: 5px;
@@ -45,19 +46,19 @@
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
+      font-size: 14px;
     }
     th, td {
       border: 1px solid #ddd;
       text-align: left;
-      padding: 8px;
-      font-size: 14px;
+      padding: 10px;
     }
     th {
       background-color: #f4f4f4;
     }
     textarea {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-top: 10px;
       font-size: 14px;
       border-radius: 5px;
@@ -68,7 +69,8 @@
       color: white;
       border: none;
       border-radius: 5px;
-      padding: 5px 10px;
+      padding: 6px 10px;
+      font-size: 12px;
       cursor: pointer;
     }
     .delete-button:hover {
@@ -76,20 +78,25 @@
     }
 
     /* Mobilanpassning */
-    @media (max-width: 600px) {
+    @media (max-width: 480px) {
       h1 {
-        font-size: 20px;
+        font-size: 18px;
       }
       .button {
         font-size: 14px;
-        padding: 8px;
+        padding: 10px;
       }
       textarea {
         font-size: 12px;
+        padding: 8px;
       }
       table th, table td {
         font-size: 12px;
         padding: 6px;
+      }
+      .delete-button {
+        padding: 5px 8px;
+        font-size: 10px;
       }
     }
   </style>
@@ -99,10 +106,10 @@
     <h1>Promenadlogg</h1>
     <button class="button" id="startWalkButton" onclick="startWalk()">Starta Promenad</button>
     <button class="button" id="stopWalkButton" onclick="stopWalk()" disabled>Stoppa Promenad</button>
-    <div id="currentWalk"></div>
+    <div id="currentWalk" style="margin-top: 10px;"></div>
     <textarea id="notes" placeholder="Lägg till anteckningar om promenaden (frivilligt)"></textarea>
     <div class="log-section">
-      <h2>Historik</h2>
+      <h2 style="font-size: 18px; text-align: center; margin-top: 20px;">Historik</h2>
       <button class="button" onclick="clearAllHistory()">Rensa all historik</button>
       <table id="walkLog">
         <thead>
@@ -111,7 +118,6 @@
             <th>Starttid</th>
             <th>Sluttid</th>
             <th>Varaktighet</th>
-            <th>Avstånd (km)</th>
             <th>Anteckningar</th>
             <th>Ta bort</th>
           </tr>
@@ -124,38 +130,20 @@
   <script>
     let walkStartTime = null;
     let walkEndTime = null;
-    let totalDistance = 0;
-    let watchId = null;
-    let notes = "";
     const walkLogTable = document.getElementById("walkLog").querySelector("tbody");
     const currentWalkDisplay = document.getElementById("currentWalk");
 
     function startWalk() {
       walkStartTime = new Date();
-      totalDistance = 0;
-      notes = "";
       document.getElementById("startWalkButton").disabled = true;
       document.getElementById("stopWalkButton").disabled = false;
       currentWalkDisplay.textContent = `Promenad påbörjad: ${walkStartTime.toLocaleTimeString()}`;
-
-      if (navigator.geolocation) {
-        watchId = navigator.geolocation.watchPosition(updatePosition, showError, {
-          enableHighAccuracy: true,
-          maximumAge: 0
-        });
-      } else {
-        alert("Geolocation stöds inte av denna enhet.");
-      }
     }
 
     function stopWalk() {
       walkEndTime = new Date();
       const duration = calculateDuration(walkStartTime, walkEndTime);
-      notes = document.getElementById("notes").value;
-
-      if (navigator.geolocation) {
-        navigator.geolocation.clearWatch(watchId);
-      }
+      const notes = document.getElementById("notes").value;
 
       const row = document.createElement("tr");
       row.innerHTML = `
@@ -163,7 +151,6 @@
         <td>${walkStartTime.toLocaleTimeString()}</td>
         <td>${walkEndTime.toLocaleTimeString()}</td>
         <td>${duration}</td>
-        <td>${totalDistance.toFixed(2)}</td>
         <td>${notes || "Ingen anteckning"}</td>
         <td><button class="delete-button" onclick="deleteWalk(this)">Ta bort</button></td>
       `;
@@ -175,37 +162,6 @@
       document.getElementById("notes").value = "";
       document.getElementById("startWalkButton").disabled = false;
       document.getElementById("stopWalkButton").disabled = true;
-    }
-
-    function updatePosition(position) {
-      if (walkStartTime) {
-        const { latitude, longitude } = position.coords;
-        if (lastPosition) {
-          const distance = calculateDistance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
-          totalDistance += distance;
-        }
-        lastPosition = { latitude, longitude };
-      }
-    }
-
-    function calculateDistance(lat1, lon1, lat2, lon2) {
-      const R = 6371;
-      const dLat = deg2rad(lat2 - lat1);
-      const dLon = deg2rad(lon2 - lon1);
-      const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-      return R * c;
-    }
-
-    function deg2rad(deg) {
-      return deg * (Math.PI / 180);
-    }
-
-    function showError(error) {
-      console.warn(`ERROR(${error.code}): ${error.message}`);
     }
 
     function calculateDuration(start, end) {
