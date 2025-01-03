@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Promenadlogg</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      color: white;
+      background-color: #3498db;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #2980b9;
+    }
+    .log-section {
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      text-align: left;
+      padding: 8px;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Promenadlogg</h1>
+    <button class="button" id="startWalkButton" onclick="startWalk()">Starta Promenad</button>
+    <button class="button" id="stopWalkButton" onclick="stopWalk()" disabled>Stoppa Promenad</button>
+    <div id="currentWalk"></div>
+    <div class="log-section">
+      <h2>Historik</h2>
+      <table id="walkLog">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Starttid</th>
+            <th>Sluttid</th>
+            <th>Varaktighet</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    let walkStartTime = null;
+    let walkEndTime = null;
+    const walkLogTable = document.getElementById("walkLog").querySelector("tbody");
+    const currentWalkDisplay = document.getElementById("currentWalk");
+
+    function startWalk() {
+      walkStartTime = new Date();
+      document.getElementById("startWalkButton").disabled = true;
+      document.getElementById("stopWalkButton").disabled = false;
+      currentWalkDisplay.textContent = `Promenad påbörjad: ${walkStartTime.toLocaleTimeString()}`;
+    }
+
+    function stopWalk() {
+      walkEndTime = new Date();
+      const duration = calculateDuration(walkStartTime, walkEndTime);
+
+      // Lägg till i historiken
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td>${walkStartTime.toLocaleDateString()}</td>
+        <td>${walkStartTime.toLocaleTimeString()}</td>
+        <td>${walkEndTime.toLocaleTimeString()}</td>
+        <td>${duration}</td>
+      `;
+      walkLogTable.appendChild(row);
+
+      // Återställ
+      walkStartTime = null;
+      walkEndTime = null;
+      currentWalkDisplay.textContent = "";
+      document.getElementById("startWalkButton").disabled = false;
+      document.getElementById("stopWalkButton").disabled = true;
+    }
+
+    function calculateDuration(start, end) {
+      const diffMs = end - start;
+      const minutes = Math.floor(diffMs / 60000);
+      const seconds = Math.floor((diffMs % 60000) / 1000);
+      return `${minutes} min ${seconds} sek`;
+    }
+  </script>
+</body>
+</html>
