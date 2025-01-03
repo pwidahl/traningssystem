@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hälsa & Välmående</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 600px;
+      margin: 20px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      color: white;
+      background-color: #3498db;
+      cursor: pointer;
+    }
+    .button:hover {
+      background-color: #2980b9;
+    }
+    select {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+      margin-top: 20px;
+    }
+    input {
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      text-align: left;
+      padding: 10px;
+      font-size: 14px;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    #weightChart {
+      max-width: 100%;
+      height: 300px;
+      margin-top: 20px;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Hälsa & Välmående</h1>
+
+    <!-- Hundväljare -->
+    <div class="section">
+      <h2>Välj hund</h2>
+      <select id="dogSelector">
+        <option value="Dog 1">Work-a-lot Bim</option>
+        <option value="Dog 2">Alickra's look at Vespertilio</option>
+     <option value="Dog 3">Winga</option>
+    <option value="Dog 4">Milla</option>
+       </select>
+      <button class="button" id="addDogButton">Lägg till ny hund</button>
+    </div>
+
+    <!-- Viktlogg -->
+    <div class="section">
+      <h2>Viktlogg för <span id="currentDog">Hund 1</span></h2>
+      <form id="weightForm">
+        <input type="number" id="weightInput" placeholder="Ange vikt (kg)" required>
+        <input type="date" id="dateInput" required>
+        <button class="button" type="submit">Lägg till vikt</button>
+      </form>
+      <canvas id="weightChart"></canvas>
+      <table id="weightLog">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Vikt (kg)</th>
+            <th>Ta bort</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Medicinska påminnelser -->
+    <div class="section">
+      <h2>Medicinska påminnelser för <span id="currentDogReminders">Hund 1</span></h2>
+      <form id="reminderForm">
+        <input type="text" id="reminderInput" placeholder="Vad behöver du bli påmind om?" required>
+        <input type="date" id="reminderDate" required>
+        <button class="button" type="submit">Lägg till påminnelse</button>
+      </form>
+      <table id="reminderLog">
+        <thead>
+          <tr>
+            <th>Påminnelse</th>
+            <th>Datum</th>
+            <th>Ta bort</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const dogs = {
+      "Dog 1": { weightLog: [], reminders: [] },
+      "Dog 2": { weightLog: [], reminders: [] },
+    };
+
+    const dogSelector = document.getElementById("dogSelector");
+    const currentDogLabel = document.getElementById("currentDog");
+    const currentDogRemindersLabel = document.getElementById("currentDogReminders");
+    let currentDog = dogSelector.value;
+
+    const weightLogTable = document.querySelector("#weightLog tbody");
+    const reminderLogTable = document.querySelector("#reminderLog tbody");
+    const chartContext = document.getElementById("weightChart").getContext("2d");
+    let weightChart;
+
+    dogSelector.addEventListener("change", () => {
+      currentDog = dogSelector.value;
+      currentDogLabel.textContent = currentDog;
+      currentDogRemindersLabel.textContent = currentDog;
+      updateWeightTable();
+      updateReminderTable();
+      updateWeightChart();
+    });
+
+    document.getElementById("addDogButton").addEventListener("click", () => {
+      const newDogName = prompt("Ange namn för ny hund:");
+      if (newDogName && !dogs[newDogName]) {
+        dogs[newDogName] = { weightLog: [], reminders: [] };
+        const newOption = document.createElement("option");
+        newOption.value = newDogName;
+        newOption.textContent = newDogName;
+        dogSelector.appendChild(newOption);
+        dogSelector.value = newDogName;
+        dogSelector.dispatchEvent(new Event("change"));
+      }
+    });
+
+    // Viktlogg
+    document.querySelector("#weightForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const weight = parseFloat(document.querySelector("#weightInput").value);
+      const date = document.querySelector("#dateInput").value;
+
+      dogs[currentDog].weightLog.push({ date, weight });
+      updateWeightTable();
+      updateWeightChart();
+      event.target.reset();
+    });
+
+    function updateWeightTable() {
+      weightLogTable.innerHTML = "";
+      dogs[currentDog].weightLog.forEach((entry, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.date}</td>
+          <td>${entry.weight} kg</td>
+          <td><button class="button delete-button" onclick="deleteWeight(${index})">Ta bort</button></td>
+        `;
+        weightLogTable.appendChild(row);
+      });
+    }
+
+    function deleteWeight(index) {
+      dogs[currentDog].weightLog.splice(index, 1);
+      updateWeightTable();
+      updateWeightChart();
+    }
+
+    function updateWeightChart() {
+      const dates = dogs[currentDog].weightLog.map(entry => entry.date);
+      const weights = dogs[currentDog].weightLog.map(entry => entry.weight);
+
+      if (weightChart) {
+        weightChart.destroy();
+      }
+
+      weightChart = new Chart(chartContext, {
+        type: "line",
+        data: {
+          labels: dates,
+          datasets: [
+            {
+              label: "Vikt (kg)",
+              data: weights,
+              borderColor: "#3498db",
+              tension: 0.1,
+              fill: false,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: "top",
+            },
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: "Datum",
+              },
+            },
+            y: {
+              title: {
+                display: true,
+                text: "Vikt (kg)",
+              },
+              beginAtZero: true,
+            },
+          },
+        },
+      });
+    }
+
+    // Medicinska påminnelser
+    document.querySelector("#reminderForm").addEventListener("submit", event => {
+      event.preventDefault();
+      const reminder = document.querySelector("#reminderInput").value;
+      const date = document.querySelector("#reminderDate").value;
+
+      dogs[currentDog].reminders.push({ reminder, date });
+      updateReminderTable();
+      event.target.reset();
+    });
+
+    function updateReminderTable() {
+      reminderLogTable.innerHTML = "";
+      dogs[currentDog].reminders.forEach((entry, index) => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${entry.reminder}</td>
+          <td>${entry.date}</td>
+          <td><button class="button delete-button" onclick="deleteReminder(${index})">Ta bort</button></td>
+        `;
+        reminderLogTable.appendChild(row);
+      });
+    }
+
+    function deleteReminder(index) {
+      dogs[currentDog].reminders.splice(index, 1);
+      updateReminderTable();
+    }
+
+    // Initiera sidan
+    updateWeightTable();
+    updateReminderTable();
+    updateWeightChart();
+  </script>
+</body>
+</html>
