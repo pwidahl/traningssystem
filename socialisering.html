@@ -19,12 +19,9 @@
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    h1 {
+    h1, h2 {
       text-align: center;
       color: #2c3e50;
-    }
-    .section {
-      margin: 20px 0;
     }
     .button {
       display: block;
@@ -41,16 +38,13 @@
     .button:hover {
       background-color: #2980b9;
     }
-    .map-container {
+    textarea {
       width: 100%;
-      height: 300px;
-      background-color: #ddd;
-      border-radius: 10px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 16px;
-      color: #555;
+      padding: 12px;
+      margin-top: 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
     }
     ul {
       list-style-type: none;
@@ -61,6 +55,26 @@
       margin: 5px 0;
       padding: 10px;
       border-radius: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .delete-button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .delete-button:hover {
+      background-color: #c0392b;
+    }
+    #map {
+      width: 100%;
+      height: 300px;
+      border-radius: 10px;
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -68,42 +82,119 @@
   <div class="container">
     <h1>Socialisering & Relation</h1>
 
-    <!-- Socialiseringstips -->
-    <div class="section">
-      <h2>Socialiseringstips</h2>
-      <ul>
-        <li>Ta med hunden till en lugn park för att observera andra hundar.</li>
-        <li>Belöna positivt beteende när hunden möter nya människor.</li>
-        <li>Introducera nya miljöer långsamt och låt hunden utforska i sin egen takt.</li>
-      </ul>
-    </div>
-
     <!-- Hundvänliga platser -->
     <div class="section">
       <h2>Hundvänliga platser nära dig</h2>
-      <div class="map-container" id="map">
-        Laddar karta...
-      </div>
+      <div id="map">Laddar karta...</div>
     </div>
 
     <!-- Relationsbyggande aktivitet -->
     <div class="section">
       <h2>Relationsbyggande aktivitet</h2>
-      <p>Dagens förslag: <strong>Göm en godbit och låt hunden använda sin nos för att hitta den.</strong></p>
+      <p id="bondingActivity"></p>
+      <button class="button" id="newActivityButton">Ny aktivitet</button>
+    </div>
+
+    <!-- Logg av sociala framsteg -->
+    <div class="section">
+      <h2>Logga sociala framsteg</h2>
+      <textarea id="logInput" placeholder="Vad hände idag?"></textarea>
+      <button class="button" id="addLogButton">Lägg till logg</button>
+      <ul id="logList"></ul>
     </div>
   </div>
 
+  <script async
+    src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY&callback=initMap">
+  </script>
   <script>
-    // Karta över hundvänliga platser (simulerad)
-    function loadMap() {
-      const mapContainer = document.getElementById("map");
-      setTimeout(() => {
-        mapContainer.textContent = "Hundvänliga platser: Hundparken i Centrum, Café Tass i Norr, Skogsslingan vid Söderäng.";
-      }, 2000); // Simulerar laddning av kartdata
+    // Google Maps API
+    function initMap() {
+      const map = new google.maps.Map(document.getElementById("map"), {
+        center: { lat: 59.3293, lng: 18.0686 }, // Exempel: Stockholm
+        zoom: 12,
+      });
+
+      const dogFriendlyPlaces = [
+        { name: "Hundparken i Centrum", location: { lat: 59.3326, lng: 18.0649 } },
+        { name: "Café Tass i Norr", location: { lat: 59.3368, lng: 18.0858 } },
+        { name: "Skogsslingan vid Söderäng", location: { lat: 59.3201, lng: 18.0526 } },
+      ];
+
+      dogFriendlyPlaces.forEach(place => {
+        const marker = new google.maps.Marker({
+          position: place.location,
+          map,
+          title: place.name,
+        });
+
+        const infoWindow = new google.maps.InfoWindow({
+          content: `<strong>${place.name}</strong>`,
+        });
+
+        marker.addListener("click", () => {
+          infoWindow.open(map, marker);
+        });
+      });
     }
 
-    // Ladda kartan när sidan laddas
-    window.onload = loadMap;
+    // Relationsbyggande aktiviteter
+    const bondingActivities = [
+      "Göm en godbit och låt hunden använda sin nos för att hitta den.",
+      "Lek dragkamp med en leksak för att engagera hunden fysiskt och mentalt.",
+      "Träna ett nytt trick, som att snurra eller backa.",
+      "Lägg dig bredvid hunden och klappa den för att skapa lugn.",
+      "Kasta en boll och uppmuntra hunden att hämta den."
+    ];
+
+    function generateNewActivity() {
+      const activityContainer = document.querySelector("#bondingActivity");
+      const randomIndex = Math.floor(Math.random() * bondingActivities.length);
+      activityContainer.textContent = bondingActivities[randomIndex];
+    }
+
+    // Loggning av sociala framsteg
+    function addLogEntry() {
+      const logInput = document.querySelector("#logInput");
+      const logList = document.querySelector("#logList");
+      const entry = logInput.value.trim();
+
+      if (entry) {
+        const listItem = document.createElement("li");
+        listItem.textContent = entry;
+
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Ta bort";
+        deleteButton.classList.add("delete-button");
+
+        deleteButton.addEventListener("click", () => {
+          logList.removeChild(listItem);
+        });
+
+        listItem.appendChild(deleteButton);
+        logList.appendChild(listItem);
+        logInput.value = "";
+      }
+    }
+
+    // Pushnotiser
+    function requestNotificationPermission() {
+      if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+          if (permission === "granted") {
+            new Notification("Glöm inte dagens relationsbyggande aktivitet!");
+          }
+        });
+      }
+    }
+
+    // Initiera sidan
+    document.addEventListener("DOMContentLoaded", () => {
+      generateNewActivity();
+      document.querySelector("#newActivityButton").addEventListener("click", generateNewActivity);
+      document.querySelector("#addLogButton").addEventListener("click", addLogEntry);
+      requestNotificationPermission();
+    });
   </script>
 </body>
 </html>
