@@ -59,7 +59,7 @@
       background-color: #2980b9;
     }
 
-    input, textarea {
+    input, select, textarea {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -68,17 +68,17 @@
       border: 1px solid #ddd;
     }
 
-    .training-list {
-      list-style: none;
-      padding: 0;
-    }
-
-    .training-list li {
-      margin: 10px 0;
+    .training-plan {
+      margin: 20px 0;
       padding: 10px;
       border: 1px solid #ddd;
       border-radius: 5px;
       background-color: #f9f9f9;
+    }
+
+    .training-plan h3 {
+      margin: 0;
+      color: #2c3e50;
     }
   </style>
 </head>
@@ -94,22 +94,47 @@
     <h1>Träningsgenerator</h1>
     <h2>Hund: <span id="selectedDog">Ingen vald</span></h2>
 
-    <!-- Lägg till ny träning -->
-    <h2>Lägg till ny träning</h2>
-    <input type="text" id="trainingName" placeholder="Träningens namn" />
-    <textarea id="trainingDescription" placeholder="Beskriv träningen..."></textarea>
-    <button class="button" id="addTrainingButton">Lägg till träning</button>
+    <!-- Välj sport och tidslängd -->
+    <h2>Generera träningspass</h2>
+    <label for="sportSelector">Välj sport:</label>
+    <select id="sportSelector">
+      <option value="freestyle">Freestyle</option>
+      <option value="vallning">Vallning</option>
+    </select>
 
-    <!-- Lista över träningar -->
-    <h2>Träningslista</h2>
-    <ul id="trainingList" class="training-list"></ul>
+    <label for="timeSelector">Välj tid:</label>
+    <select id="timeSelector">
+      <option value="15">15 minuter</option>
+      <option value="30">30 minuter</option>
+      <option value="60">1 timme</option>
+    </select>
+
+    <button class="button" id="generateTrainingButton">Generera träningspass</button>
+
+    <!-- Visa genererat träningspass -->
+    <div id="trainingPlan" class="training-plan" style="display: none;">
+      <h3>Träningspass</h3>
+      <ul id="trainingPlanDetails"></ul>
+    </div>
+
+    <!-- Lägg till egna övningar -->
+    <h2>Lägg till egen övning</h2>
+    <input type="text" id="exerciseName" placeholder="Övningens namn" />
+    <textarea id="exerciseDescription" placeholder="Beskriv övningen..."></textarea>
+    <button class="button" id="addExerciseButton">Lägg till övning</button>
+
+    <!-- Lista över egna övningar -->
+    <h2>Egna övningar</h2>
+    <ul id="exerciseList"></ul>
   </div>
 
   <script>
     const currentDog = localStorage.getItem("currentDog");
     const dogs = JSON.parse(localStorage.getItem("dogs")) || {};
     const selectedDogSpan = document.getElementById("selectedDog");
-    const trainingList = document.getElementById("trainingList");
+    const trainingPlanDetails = document.getElementById("trainingPlanDetails");
+    const trainingPlanDiv = document.getElementById("trainingPlan");
+    const exerciseList = document.getElementById("exerciseList");
 
     if (currentDog) {
       selectedDogSpan.textContent = currentDog;
@@ -122,55 +147,86 @@
       localStorage.setItem("dogs", JSON.stringify(dogs));
     }
 
-    function loadTrainings() {
-      trainingList.innerHTML = "";
+    function loadExercises() {
+      exerciseList.innerHTML = "";
 
-      if (!dogs[currentDog] || !dogs[currentDog].trainings) {
-        dogs[currentDog] = { ...dogs[currentDog], trainings: [] };
+      if (!dogs[currentDog] || !dogs[currentDog].exercises) {
+        dogs[currentDog] = { ...dogs[currentDog], exercises: [] };
       }
 
-      const trainings = dogs[currentDog].trainings;
-      trainings.forEach((training, index) => {
+      const exercises = dogs[currentDog].exercises;
+      exercises.forEach((exercise, index) => {
         const li = document.createElement("li");
-        li.innerHTML = `<strong>${training.name}</strong><br>${training.description}<br>`;
+        li.innerHTML = `<strong>${exercise.name}</strong><br>${exercise.description}<br>`;
         const deleteButton = document.createElement("button");
         deleteButton.textContent = "Ta bort";
         deleteButton.classList.add("button", "delete-button");
         deleteButton.style.marginTop = "10px";
         deleteButton.addEventListener("click", () => {
-          trainings.splice(index, 1);
+          exercises.splice(index, 1);
           saveDogsToLocalStorage();
-          loadTrainings();
+          loadExercises();
         });
         li.appendChild(deleteButton);
-        trainingList.appendChild(li);
+        exerciseList.appendChild(li);
       });
     }
 
-    document.getElementById("addTrainingButton").addEventListener("click", () => {
-      const trainingName = document.getElementById("trainingName").value.trim();
-      const trainingDescription = document.getElementById("trainingDescription").value.trim();
+    document.getElementById("addExerciseButton").addEventListener("click", () => {
+      const exerciseName = document.getElementById("exerciseName").value.trim();
+      const exerciseDescription = document.getElementById("exerciseDescription").value.trim();
 
-      if (!trainingName || !trainingDescription) {
-        alert("Fyll i både namn och beskrivning för träningen.");
+      if (!exerciseName || !exerciseDescription) {
+        alert("Fyll i både namn och beskrivning för övningen.");
         return;
       }
 
       if (!dogs[currentDog]) {
-        dogs[currentDog] = { trainings: [] };
+        dogs[currentDog] = { exercises: [] };
       }
 
-      dogs[currentDog].trainings.push({ name: trainingName, description: trainingDescription });
+      dogs[currentDog].exercises.push({ name: exerciseName, description: exerciseDescription });
       saveDogsToLocalStorage();
-      loadTrainings();
+      loadExercises();
 
       // Rensa fälten
-      document.getElementById("trainingName").value = "";
-      document.getElementById("trainingDescription").value = "";
+      document.getElementById("exerciseName").value = "";
+      document.getElementById("exerciseDescription").value = "";
     });
 
-    // Ladda träningslistan vid sidladdning
-    loadTrainings();
+    document.getElementById("generateTrainingButton").addEventListener("click", () => {
+      const sport = document.getElementById("sportSelector").value;
+      const time = parseInt(document.getElementById("timeSelector").value);
+
+      if (!dogs[currentDog] || !dogs[currentDog].exercises || dogs[currentDog].exercises.length === 0) {
+        alert("Det finns inga övningar för den valda hunden. Lägg till övningar först.");
+        return;
+      }
+
+      const exercises = [...dogs[currentDog].exercises];
+      const plan = [];
+      let totalTime = 0;
+
+      while (totalTime < time && exercises.length > 0) {
+        const index = Math.floor(Math.random() * exercises.length);
+        const exercise = exercises.splice(index, 1)[0];
+        const duration = Math.min(5, time - totalTime); // Varje övning får max 5 min.
+        plan.push({ ...exercise, duration });
+        totalTime += duration;
+      }
+
+      trainingPlanDetails.innerHTML = "";
+      plan.forEach((exercise) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${exercise.name}:</strong> ${exercise.description} (Tid: ${exercise.duration} min)`;
+        trainingPlanDetails.appendChild(li);
+      });
+
+      trainingPlanDiv.style.display = "block";
+    });
+
+    // Ladda övningar vid sidladdning
+    loadExercises();
   </script>
 </body>
 </html>
