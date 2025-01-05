@@ -3,213 +3,275 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard</title>
+  <title>Dashboard - Hundhantering</title>
   <style>
-    /* Baslayout */
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f0f2f5;
+      font-family: Arial, sans-serif;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      min-height: 100vh;
+      background-color: #f9f9f9;
     }
 
-    /* Header */
-    .dashboard-container {
-      text-align: center;
-      margin: 20px 0;
+    nav {
+      background-color: #3498db;
+      padding: 10px 20px;
     }
 
-    h1 {
-      font-size: 1.8rem;
-      color: #333333;
-    }
-
-    p {
-      font-size: 1rem;
-      color: #555555;
-      margin-bottom: 20px;
-    }
-
-    /* Meny */
-    .menu {
-      width: 90%;
-      max-width: 600px;
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-      gap: 15px;
-    }
-
-    .menu a {
+    nav a {
+      color: white;
       text-decoration: none;
-      color: #ffffff;
-      background-color: #0078d7;
-      padding: 15px;
-      font-size: 1rem;
-      font-weight: bold;
-      text-align: center;
-      border-radius: 8px;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      margin-right: 15px;
+      font-size: 16px;
     }
 
-    .menu a:hover {
-      background-color: #005bb5;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    nav a:hover {
+      text-decoration: underline;
     }
 
-    /* Logga ut-knappen */
-    button.logout {
-      margin: 20px 0;
-      padding: 8px 15px;
-      background-color: #f5f5f5;
-      color: #555555;
-      border: 1px solid #cccccc;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-    }
-
-    button.logout:hover {
-      background-color: #e0e0e0;
-      transform: scale(1.05);
-    }
-
-    /* Hundväxling */
-    .dog-selector {
-      margin: 20px 0;
-    }
-
-    .dog-selector select {
-      padding: 10px;
-      font-size: 1rem;
-      border: 1px solid #cccccc;
-      border-radius: 8px;
-    }
-
-    /* Sammanställning */
-    .summary {
-      margin: 20px 0;
-      width: 90%;
-      max-width: 600px;
-      background-color: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    .container {
+      max-width: 95%;
+      margin: 20px auto;
       padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h1, h2 {
       text-align: center;
+      color: #2c3e50;
     }
 
-    .summary h2 {
-      font-size: 1.5rem;
-      color: #333333;
-      margin-bottom: 20px;
-    }
-
-    .progress-bar-container {
-      background-color: #e0e0e0;
-      border-radius: 8px;
+    .button {
+      display: block;
       width: 100%;
-      height: 20px;
-      overflow: hidden;
+      padding: 10px;
       margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      color: white;
+      background-color: #3498db;
+      cursor: pointer;
     }
 
-    .progress-bar {
-      height: 100%;
-      background-color: #0078d7;
-      transition: width 0.3s ease;
+    .button:hover {
+      background-color: #2980b9;
     }
 
-    .motivation {
-      font-size: 1rem;
-      color: #0078d7;
-      margin-top: 20px;
+    .delete-button {
+      background-color: #e74c3c;
+    }
+
+    .delete-button:hover {
+      background-color: #c0392b;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+    }
+
+    .dog-list {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+    }
+
+    .dog-list h3 {
+      margin: 0;
+      color: #2c3e50;
+    }
+
+    .profile-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background-color: #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
       font-weight: bold;
+      color: #555;
+      overflow: hidden;
+      flex-shrink: 0;
+      margin: 10px auto;
+    }
+
+    .profile-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
     }
   </style>
 </head>
 <body>
-  <div class="dashboard-container">
-    <h1>Välkommen till ditt hundrum</h1>
-    <p>Du är nu inloggad.</p>
-    <div class="dog-selector">
-      <label for="dogSelector">Välj Hund:</label>
-      <select id="dogSelector">
-        <option value="hund1">Work-a-lot Bim</option>
-        <option value="hund2">Alickra’s Look at Vespertilio</option>
-        <option value="hund3">Milla</option>
-        <option value="hund4">Winga</option>
-      </select>
-    </div>
-    <button class="logout" id="logoutButton">Logga ut</button>
-  </div>
+  <!-- Meny -->
+  <nav>
+    <a href="#">Hem</a>
+    <a href="#">Freestyle</a>
+    <a href="#">Vallning</a>
+    <a href="#">Träningslogg</a>
+  </nav>
 
-  <div class="menu">
-      <a href="traningsgenerator.html">Generera träningspass</a>
-            <a href="socialisering.html">Socialisering & relation</a>
-            <a href="promenadlogg.html">Promenadlogg</a>
-              <a href="planering.html">Aktivitetsplanering</a>
-                    <a href="halsa.html">Hälsa & välmående</a>
-                         <a href="utvackling.html">Utveckling</a>
-  </div>
+  <div class="container">
+    <h1>Hundhantering</h1>
 
-  <div class="summary">
-    <h2>Sammanställning för <span id="dogName">Work-a-lot Bim</span></h2>
-    <p id="ongoingGoals">Pågående mål: Laddar...</p>
-    <p id="completedGoals">Uppnådda mål: Laddar...</p>
-    <div class="progress-bar-container">
-      <div id="progressBar" class="progress-bar" style="width: 0%;"></div>
+    <!-- Hundväxling -->
+    <div>
+      <h2>Välj en hund</h2>
+      <select id="dogSelector" class="button"></select>
+      <button class="button" id="addDogButton">Lägg till ny hund</button>
     </div>
-    <p id="progressPercentage">Framgång: Laddar...</p>
-    <p class="motivation" id="motivation">Håll igång träningen för fler framgångar!</p>
+
+    <!-- Profilinformation -->
+    <div>
+      <h2>Information om hund</h2>
+      <div class="profile-image" id="profileImage">BILD</div>
+      <input type="file" id="profileImageInput" accept="image/*" style="display: none;">
+      <button class="button" id="uploadImageButton">Ladda upp bild</button>
+      <div>
+        <input type="text" id="dogName" placeholder="Hundens namn">
+        <input type="text" id="dogBreed" placeholder="Ras">
+        <label for="dogBirthdate">Födelsedatum</label>
+        <input type="date" id="dogBirthdate">
+        <select id="dogGender">
+          <option value="Hane">Hane</option>
+          <option value="Tik">Tik</option>
+        </select>
+        <label for="dogNotes">Anteckningar</label>
+        <textarea id="dogNotes" placeholder="Skriv extra information om hunden..."></textarea>
+      </div>
+      <button class="button" id="saveProfileButton">Spara ändringar</button>
+      <button class="button delete-button" id="deleteDogButton">Ta bort hund</button>
+    </div>
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const dogSelector = document.getElementById('dogSelector');
-      const dogName = document.getElementById('dogName');
+    let dogs = JSON.parse(localStorage.getItem("dogs")) || {};
+    let currentDog = localStorage.getItem("currentDog") || null;
 
-      // Initial laddning för vald hund
-      loadSummary('hund1');
+    const dogSelector = document.getElementById("dogSelector");
+    const currentDogLabel = document.getElementById("currentDog");
+    const profileImage = document.getElementById("profileImage");
+    const profileImageInput = document.getElementById("profileImageInput");
+    const uploadImageButton = document.getElementById("uploadImageButton");
 
-      // Vid byte av hund
-      dogSelector.addEventListener('change', () => {
-        const selectedDog = dogSelector.value;
-        dogName.textContent = dogSelector.options[dogSelector.selectedIndex].text;
-        loadSummary(selectedDog);
-      });
+    function saveDogsToLocalStorage() {
+      localStorage.setItem("dogs", JSON.stringify(dogs));
+      localStorage.setItem("currentDog", currentDog);
+    }
 
-      function loadSummary(dog) {
-        const goalsKey = `trainingGoals_${dog}`;
-        const achievedGoalsKey = `achievedGoals_${dog}`;
-        
-        const goals = JSON.parse(localStorage.getItem(goalsKey)) || [];
-        const achievedGoals = JSON.parse(localStorage.getItem(achievedGoalsKey)) || [];
+    function updateDogSelector() {
+      dogSelector.innerHTML = "";
+      for (const dogName in dogs) {
+        const option = document.createElement("option");
+        option.value = dogName;
+        option.textContent = dogName;
+        dogSelector.appendChild(option);
+      }
+      if (currentDog) {
+        dogSelector.value = currentDog;
+      }
+    }
 
-        const ongoingGoals = goals.length;
-        const completedGoals = achievedGoals.length;
-        const totalGoals = ongoingGoals + completedGoals;
-        const progress = totalGoals ? Math.round((completedGoals / totalGoals) * 100) : 0;
-
-        document.getElementById('ongoingGoals').textContent = `Pågående mål: ${ongoingGoals}`;
-        document.getElementById('completedGoals').textContent = `Uppnådda mål: ${completedGoals}`;
-        document.getElementById('progressBar').style.width = `${progress}%`;
-        document.getElementById('progressPercentage').textContent = `Framgång: ${progress}%`;
+    function loadCurrentDogProfile() {
+      if (!currentDog || !dogs[currentDog]) {
+        document.getElementById("dogName").value = "";
+        document.getElementById("dogBreed").value = "";
+        document.getElementById("dogBirthdate").value = "";
+        document.getElementById("dogGender").value = "Hane";
+        document.getElementById("dogNotes").value = "";
+        profileImage.innerHTML = "BILD";
+        return;
       }
 
-      document.getElementById('logoutButton').addEventListener('click', () => {
-        localStorage.removeItem('isLoggedIn');
-        window.location.href = 'index.html';
-      });
+      const dog = dogs[currentDog];
+      document.getElementById("dogName").value = dog.name || "";
+      document.getElementById("dogBreed").value = dog.breed || "";
+      document.getElementById("dogBirthdate").value = dog.birthdate || "";
+      document.getElementById("dogGender").value = dog.gender || "Hane";
+      document.getElementById("dogNotes").value = dog.notes || "";
+
+      if (dog.image) {
+        profileImage.innerHTML = `<img src="${dog.image}" alt="Profilbild">`;
+      } else {
+        profileImage.innerHTML = "BILD";
+      }
+    }
+
+    uploadImageButton.addEventListener("click", () => {
+      profileImageInput.click();
     });
+
+    profileImageInput.addEventListener("change", (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          if (currentDog && dogs[currentDog]) {
+            dogs[currentDog].image = reader.result;
+            saveDogsToLocalStorage();
+            loadCurrentDogProfile();
+          }
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    dogSelector.addEventListener("change", () => {
+      currentDog = dogSelector.value;
+      localStorage.setItem("currentDog", currentDog);
+      loadCurrentDogProfile();
+    });
+
+    document.getElementById("addDogButton").addEventListener("click", () => {
+      const dogName = prompt("Ange hundens namn:");
+      if (dogName && !dogs[dogName]) {
+        dogs[dogName] = { name: dogName, breed: "", birthdate: "", gender: "Hane", image: null, notes: "" };
+        currentDog = dogName;
+        saveDogsToLocalStorage();
+        updateDogSelector();
+        loadCurrentDogProfile();
+      } else if (dogs[dogName]) {
+        alert("En hund med detta namn finns redan.");
+      }
+    });
+
+    document.getElementById("deleteDogButton").addEventListener("click", () => {
+      if (!currentDog) return alert("Ingen hund vald för borttagning.");
+      if (confirm(`Är du säker på att du vill ta bort ${currentDog}?`)) {
+        delete dogs[currentDog];
+        currentDog = null;
+        saveDogsToLocalStorage();
+        updateDogSelector();
+        loadCurrentDogProfile();
+      }
+    });
+
+    document.getElementById("saveProfileButton").addEventListener("click", () => {
+      if (!currentDog) return;
+
+      const dog = dogs[currentDog];
+      dog.name = document.getElementById("dogName").value;
+      dog.breed = document.getElementById("dogBreed").value;
+      dog.birthdate = document.getElementById("dogBirthdate").value;
+      dog.gender = document.getElementById("dogGender").value;
+      dog.notes = document.getElementById("dogNotes").value;
+
+      saveDogsToLocalStorage();
+      alert(`Profil sparad för ${currentDog}!`);
+    });
+
+    // Initiera vid sidladdning
+    updateDogSelector();
+    loadCurrentDogProfile();
   </script>
 </body>
 </html>
