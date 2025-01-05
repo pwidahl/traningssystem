@@ -81,10 +81,6 @@
       background-color: #f9f9f9;
     }
 
-    .subgoal {
-      margin-left: 20px;
-    }
-
     .progress-bar {
       height: 20px;
       background-color: #ddd;
@@ -190,15 +186,6 @@
             <div class="progress-bar-inner" style="width: ${goal.completedSubgoals / goal.subgoals.length * 100 || 0}%"></div>
           </div>
           <button class="button" onclick="markGoalAsFinished(${goalIndex})">Klarmarkera mål</button>
-          <ul class="subgoal">
-            ${goal.subgoals.map((subgoal, subgoalIndex) => `
-              <li>
-                <input type="checkbox" onchange="toggleSubgoal(${goalIndex}, ${subgoalIndex})" ${subgoal.completed ? "checked" : ""}>
-                ${subgoal.name}
-              </li>
-            `).join('')}
-          </ul>
-          <button class="button" onclick="addSubgoal(${goalIndex})">Lägg till delmål</button>
         `;
         goalList.appendChild(li);
       });
@@ -208,16 +195,6 @@
         li.innerHTML = `<strong>${goal.name}</strong><br>${goal.description}`;
         finishedGoals.appendChild(li);
       });
-    }
-
-    function toggleSubgoal(goalIndex, subgoalIndex) {
-      const goal = dogs[currentDog].goals[goalIndex];
-      const subgoal = goal.subgoals[subgoalIndex];
-      subgoal.completed = !subgoal.completed;
-
-      goal.completedSubgoals = goal.subgoals.filter(sub => sub.completed).length;
-      saveDogsToLocalStorage();
-      loadGoals();
     }
 
     function markGoalAsFinished(goalIndex) {
@@ -234,16 +211,6 @@
       setTimeout(() => {
         fireworks.style.display = "none";
       }, 3000);
-    }
-
-    function addSubgoal(goalIndex) {
-      const subgoalName = prompt("Ange namn på delmålet:");
-      if (!subgoalName) return;
-
-      const goal = dogs[currentDog].goals[goalIndex];
-      goal.subgoals.push({ name: subgoalName, completed: false });
-      saveDogsToLocalStorage();
-      loadGoals();
     }
 
     document.getElementById("addGoalButton").addEventListener("click", () => {
