@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dagens Träningsprogram</title>
+  <title>Träningsgenerator</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -11,23 +11,55 @@
       padding: 0;
       background-color: #f9f9f9;
     }
+
+    nav {
+      background-color: #3498db;
+      padding: 10px 20px;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      margin-right: 15px;
+      font-size: 16px;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+    }
+
     .container {
-      max-width: 800px;
-      margin: auto;
-      background: #fff;
+      max-width: 95%;
+      margin: 20px auto;
       padding: 20px;
+      background: #fff;
       border-radius: 10px;
       box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
-    h1 {
+
+    h1, h2 {
       text-align: center;
       color: #2c3e50;
     }
-    p {
-      text-align: center;
+
+    .button {
+      display: block;
+      width: 100%;
+      padding: 10px;
       margin: 10px 0;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      color: white;
+      background-color: #3498db;
+      cursor: pointer;
     }
-    select, .button {
+
+    .button:hover {
+      background-color: #2980b9;
+    }
+
+    input, textarea {
       width: 100%;
       padding: 10px;
       margin: 10px 0;
@@ -35,156 +67,110 @@
       border-radius: 5px;
       border: 1px solid #ddd;
     }
-    .button {
-      background-color: #3498db;
-      color: white;
-      cursor: pointer;
-    }
-    .button:hover {
-      background-color: #2980b9;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      text-align: left;
-      padding: 8px;
-      font-size: 14px;
-    }
-    th {
-      background-color: #f4f4f4;
-    }
-    #timer {
-      text-align: center;
-      font-size: 24px;
-      margin-top: 20px;
-      color: #e74c3c;
+
+    .training-list {
+      list-style: none;
+      padding: 0;
     }
 
-    /* Mobilanpassning */
-    @media (max-width: 600px) {
-      h1 {
-        font-size: 20px;
-      }
-      table {
-        font-size: 12px;
-      }
-      th, td {
-        padding: 6px;
-      }
-      .button {
-        font-size: 14px;
-        padding: 8px;
-      }
+    .training-list li {
+      margin: 10px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      background-color: #f9f9f9;
     }
   </style>
 </head>
 <body>
+  <nav>
+    <a href="dashboard.html">Dashboard</a>
+    <a href="freestyle.html">Freestyle</a>
+    <a href="vallning.html">Vallning</a>
+    <a href="traningsgenerator.html">Träningsgenerator</a>
+  </nav>
+
   <div class="container">
-    <h1>Dagens Träningsprogram</h1>
-    <p>Välj en kategori och passlängd för att generera dagens träningsprogram. Starta timern för varje övning.</p>
-    <select id="categorySelect">
-      <option value="random">Slumpmässig kategori</option>
-      <option value="Kontaktövningar">Kontaktövningar</option>
-      <option value="Miljöträning">Miljöträning</option>
-      <option value="Freestyle">Freestyle</option>
-      <option value="Vallning">Vallning</option>
-      <option value="Lugn och ro">Lugn och ro</option>
-    </select>
-    <button class="button" onclick="generateTodayProgram(15)">15 minuter</button>
-    <button class="button" onclick="generateTodayProgram(60)">1 timme</button>
-    <button class="button" onclick="generateTodayProgram(120)">2 timmar</button>
-    <table id="trainingTable">
-      <thead>
-        <tr>
-          <th>Tid</th>
-          <th>Kategori</th>
-          <th>Övning</th>
-          <th>Timer</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div id="timer">Timer: 00:00</div>
+    <h1>Träningsgenerator</h1>
+    <h2>Hund: <span id="selectedDog">Ingen vald</span></h2>
+
+    <!-- Lägg till ny träning -->
+    <h2>Lägg till ny träning</h2>
+    <input type="text" id="trainingName" placeholder="Träningens namn" />
+    <textarea id="trainingDescription" placeholder="Beskriv träningen..."></textarea>
+    <button class="button" id="addTrainingButton">Lägg till träning</button>
+
+    <!-- Lista över träningar -->
+    <h2>Träningslista</h2>
+    <ul id="trainingList" class="training-list"></ul>
   </div>
 
   <script>
-    const exercises = {
-      "Kontaktövningar": ["Ögonkontakt", "Följsamhet vid sidan", "Namnkall"],
-      "Miljöträning": ["Gå på olika underlag", "Möta andra hundar", "Höga ljudträning"],
-      "Freestyle": ["Snurra", "Backa", "Hoppa genom ring"],
-      "Vallning": ["Följa fållan", "Stoppkommando", "Hämta flocken"],
-      "Lugn och ro": ["Ligga på filt", "Avslappning med handpåläggning", "Andningsträning"]
-    };
+    const currentDog = localStorage.getItem("currentDog");
+    const dogs = JSON.parse(localStorage.getItem("dogs")) || {};
+    const selectedDogSpan = document.getElementById("selectedDog");
+    const trainingList = document.getElementById("trainingList");
 
-    let timerInterval;
+    if (currentDog) {
+      selectedDogSpan.textContent = currentDog;
+    } else {
+      selectedDogSpan.textContent = "Ingen vald";
+      alert("Ingen hund vald. Gå tillbaka till dashboard för att välja en hund.");
+    }
 
-    function generateTodayProgram(durationMinutes) {
-      const tableBody = document.querySelector("#trainingTable tbody");
-      tableBody.innerHTML = "";
+    function saveDogsToLocalStorage() {
+      localStorage.setItem("dogs", JSON.stringify(dogs));
+    }
 
-      const categorySelect = document.getElementById("categorySelect").value;
-      const selectedCategory = categorySelect === "random" ? getRandomKey(exercises) : categorySelect;
+    function loadTrainings() {
+      trainingList.innerHTML = "";
 
-      const totalBlocks = Math.ceil(durationMinutes / 15);
-      let currentTime = "10:00";
-
-      for (let i = 0; i < totalBlocks; i++) {
-        const exercise = getRandomElement(exercises[selectedCategory]);
-        const endTime = addMinutesToTime(currentTime, 15);
-
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${currentTime} - ${endTime}</td>
-          <td>${selectedCategory}</td>
-          <td>${exercise}</td>
-          <td><button class="button" onclick="startTimer()">Starta Timer</button></td>
-        `;
-        tableBody.appendChild(row);
-
-        currentTime = endTime;
+      if (!dogs[currentDog] || !dogs[currentDog].trainings) {
+        dogs[currentDog] = { ...dogs[currentDog], trainings: [] };
       }
+
+      const trainings = dogs[currentDog].trainings;
+      trainings.forEach((training, index) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${training.name}</strong><br>${training.description}<br>`;
+        const deleteButton = document.createElement("button");
+        deleteButton.textContent = "Ta bort";
+        deleteButton.classList.add("button", "delete-button");
+        deleteButton.style.marginTop = "10px";
+        deleteButton.addEventListener("click", () => {
+          trainings.splice(index, 1);
+          saveDogsToLocalStorage();
+          loadTrainings();
+        });
+        li.appendChild(deleteButton);
+        trainingList.appendChild(li);
+      });
     }
 
-    function getRandomKey(obj) {
-      const keys = Object.keys(obj);
-      return keys[Math.floor(Math.random() * keys.length)];
-    }
+    document.getElementById("addTrainingButton").addEventListener("click", () => {
+      const trainingName = document.getElementById("trainingName").value.trim();
+      const trainingDescription = document.getElementById("trainingDescription").value.trim();
 
-    function getRandomElement(arr) {
-      return arr[Math.floor(Math.random() * arr.length)];
-    }
+      if (!trainingName || !trainingDescription) {
+        alert("Fyll i både namn och beskrivning för träningen.");
+        return;
+      }
 
-    function addMinutesToTime(time, minutes) {
-      const [hour, minute] = time.split(":").map(Number);
-      const totalMinutes = hour * 60 + minute + minutes;
-      const newHour = Math.floor(totalMinutes / 60);
-      const newMinute = totalMinutes % 60;
-      return `${newHour.toString().padStart(2, "0")}:${newMinute.toString().padStart(2, "0")}`;
-    }
+      if (!dogs[currentDog]) {
+        dogs[currentDog] = { trainings: [] };
+      }
 
-    function startTimer() {
-      clearInterval(timerInterval);
-      const timerDisplay = document.getElementById("timer");
-      let remainingTime = 15 * 60;
+      dogs[currentDog].trainings.push({ name: trainingName, description: trainingDescription });
+      saveDogsToLocalStorage();
+      loadTrainings();
 
-      timerInterval = setInterval(() => {
-        const minutes = Math.floor(remainingTime / 60);
-        const seconds = remainingTime % 60;
-        timerDisplay.textContent = `Timer: ${minutes.toString().padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
+      // Rensa fälten
+      document.getElementById("trainingName").value = "";
+      document.getElementById("trainingDescription").value = "";
+    });
 
-        if (remainingTime <= 0) {
-          clearInterval(timerInterval);
-          timerDisplay.textContent = "Tiden är slut! Bra jobbat!";
-          alert("Tiden är slut! Gå vidare till nästa övning.");
-        } else {
-          remainingTime--;
-        }
-      }, 1000);
-    }
+    // Ladda träningslistan vid sidladdning
+    loadTrainings();
   </script>
 </body>
 </html>
