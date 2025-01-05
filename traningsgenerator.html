@@ -100,6 +100,11 @@
     <select id="sportSelector">
       <option value="freestyle">Freestyle</option>
       <option value="vallning">Vallning</option>
+      <option value="lydnad">Lydnad</option>
+      <option value="styrka">Styrka</option>
+      <option value="fys">Fys</option>
+      <option value="rallylydnad">Rallylydnad</option>
+      <option value="agility">Agility</option>
     </select>
 
     <label for="timeSelector">Välj tid:</label>
@@ -121,6 +126,16 @@
     <h2>Lägg till egen övning</h2>
     <input type="text" id="exerciseName" placeholder="Övningens namn" />
     <textarea id="exerciseDescription" placeholder="Beskriv övningen..."></textarea>
+    <label for="exerciseSport">Välj sport:</label>
+    <select id="exerciseSport">
+      <option value="freestyle">Freestyle</option>
+      <option value="vallning">Vallning</option>
+      <option value="lydnad">Lydnad</option>
+      <option value="styrka">Styrka</option>
+      <option value="fys">Fys</option>
+      <option value="rallylydnad">Rallylydnad</option>
+      <option value="agility">Agility</option>
+    </select>
     <button class="button" id="addExerciseButton">Lägg till övning</button>
 
     <!-- Lista över egna övningar -->
@@ -135,6 +150,37 @@
     const trainingPlanDetails = document.getElementById("trainingPlanDetails");
     const trainingPlanDiv = document.getElementById("trainingPlan");
     const exerciseList = document.getElementById("exerciseList");
+
+    const hardCodedExercises = {
+      freestyle: [
+        { name: "Snurra", description: "Hunden snurrar runt på plats." },
+        { name: "Backa", description: "Hunden går bakåt 5 steg." }
+      ],
+      vallning: [
+        { name: "Fösning", description: "Föra fåren framåt i en rak linje." },
+        { name: "Hämta", description: "Hunden hämtar fåren till föraren." }
+      ],
+      lydnad: [
+        { name: "Fritt följ", description: "Hunden går fot utan koppel." },
+        { name: "Inkallning", description: "Hunden kommer snabbt till föraren." }
+      ],
+      styrka: [
+        { name: "Hopp", description: "Hunden hoppar över ett hinder." },
+        { name: "Sitta vackert", description: "Hunden sitter balanserat." }
+      ],
+      fys: [
+        { name: "Springa", description: "Hunden springer bredvid föraren." },
+        { name: "Klättra", description: "Hunden klättrar upp på en plattform." }
+      ],
+      rallylydnad: [
+        { name: "Sitt", description: "Hunden sätter sig vid sidan." },
+        { name: "Stanna", description: "Hunden stannar och väntar." }
+      ],
+      agility: [
+        { name: "Slalom", description: "Hunden går genom slalompinnar." },
+        { name: "Balansbom", description: "Hunden går över en balansbom." }
+      ]
+    };
 
     if (currentDog) {
       selectedDogSpan.textContent = currentDog;
@@ -154,20 +200,13 @@
         dogs[currentDog] = { ...dogs[currentDog], exercises: [] };
       }
 
-      const exercises = dogs[currentDog].exercises;
+      const exercises = dogs[currentDog].exercises.concat(
+        ...Object.values(hardCodedExercises).flat()
+      );
+
       exercises.forEach((exercise, index) => {
         const li = document.createElement("li");
         li.innerHTML = `<strong>${exercise.name}</strong><br>${exercise.description}<br>`;
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Ta bort";
-        deleteButton.classList.add("button", "delete-button");
-        deleteButton.style.marginTop = "10px";
-        deleteButton.addEventListener("click", () => {
-          exercises.splice(index, 1);
-          saveDogsToLocalStorage();
-          loadExercises();
-        });
-        li.appendChild(deleteButton);
         exerciseList.appendChild(li);
       });
     }
@@ -175,6 +214,7 @@
     document.getElementById("addExerciseButton").addEventListener("click", () => {
       const exerciseName = document.getElementById("exerciseName").value.trim();
       const exerciseDescription = document.getElementById("exerciseDescription").value.trim();
+      const exerciseSport = document.getElementById("exerciseSport").value;
 
       if (!exerciseName || !exerciseDescription) {
         alert("Fyll i både namn och beskrivning för övningen.");
@@ -185,7 +225,11 @@
         dogs[currentDog] = { exercises: [] };
       }
 
-      dogs[currentDog].exercises.push({ name: exerciseName, description: exerciseDescription });
+      dogs[currentDog].exercises.push({
+        name: exerciseName,
+        description: exerciseDescription,
+        sport: exerciseSport
+      });
       saveDogsToLocalStorage();
       loadExercises();
 
@@ -198,18 +242,21 @@
       const sport = document.getElementById("sportSelector").value;
       const time = parseInt(document.getElementById("timeSelector").value);
 
-      if (!dogs[currentDog] || !dogs[currentDog].exercises || dogs[currentDog].exercises.length === 0) {
-        alert("Det finns inga övningar för den valda hunden. Lägg till övningar först.");
+      const availableExercises = (hardCodedExercises[sport] || []).concat(
+        dogs[currentDog]?.exercises?.filter(e => e.sport === sport) || []
+      );
+
+      if (availableExercises.length === 0) {
+        alert("Det finns inga övningar för den valda sporten. Lägg till övningar först.");
         return;
       }
 
-      const exercises = [...dogs[currentDog].exercises];
       const plan = [];
       let totalTime = 0;
 
-      while (totalTime < time && exercises.length > 0) {
-        const index = Math.floor(Math.random() * exercises.length);
-        const exercise = exercises.splice(index, 1)[0];
+      while (totalTime < time && availableExercises.length > 0) {
+        const index = Math.floor(Math.random() * availableExercises.length);
+        const exercise = availableExercises.splice(index, 1)[0];
         const duration = Math.min(5, time - totalTime); // Varje övning får max 5 min.
         plan.push({ ...exercise, duration });
         totalTime += duration;
@@ -225,7 +272,6 @@
       trainingPlanDiv.style.display = "block";
     });
 
-    // Ladda övningar vid sidladdning
     loadExercises();
   </script>
 </body>
