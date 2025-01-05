@@ -80,6 +80,44 @@
       border-radius: 5px;
       background-color: #f9f9f9;
     }
+
+    .subgoal {
+      margin-left: 20px;
+    }
+
+    .progress-bar {
+      height: 20px;
+      background-color: #ddd;
+      border-radius: 5px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+
+    .progress-bar-inner {
+      height: 100%;
+      background-color: #3498db;
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .finished-goals {
+      margin-top: 20px;
+    }
+
+    #fireworks {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      color: white;
+      text-align: center;
+      padding-top: 20%;
+      font-size: 30px;
+    }
   </style>
 </head>
 <body>
@@ -90,6 +128,8 @@
     <a href="traningsgenerator.html">Träningsgenerator</a>
     <a href="malgenerator.html">Målsättningar</a>
   </nav>
+
+  <div id="fireworks">🎉 Bra jobbat! 🎉</div>
 
   <div class="container">
     <h1>Målsättningar</h1>
@@ -104,6 +144,12 @@
     <!-- Lista över mål -->
     <h2>Mål för hunden</h2>
     <ul id="goalList" class="goal-list"></ul>
+
+    <!-- Färdiga mål -->
+    <div class="finished-goals">
+      <h2>Färdiga mål</h2>
+      <ul id="finishedGoals" class="goal-list"></ul>
+    </div>
   </div>
 
   <script>
@@ -111,6 +157,7 @@
     const dogs = JSON.parse(localStorage.getItem("dogs")) || {};
     const selectedDogSpan = document.getElementById("selectedDog");
     const goalList = document.getElementById("goalList");
+    const finishedGoals = document.getElementById("finishedGoals");
 
     if (currentDog) {
       selectedDogSpan.textContent = currentDog;
@@ -125,30 +172,78 @@
 
     function loadGoals() {
       goalList.innerHTML = "";
+      finishedGoals.innerHTML = "";
 
-      if (!dogs[currentDog] || !dogs[currentDog].goals) {
-        dogs[currentDog] = { ...dogs[currentDog], goals: [] };
+      if (!dogs[currentDog]) {
+        dogs[currentDog] = { goals: [], finishedGoals: [] };
       }
 
       const goals = dogs[currentDog].goals;
-      goals.forEach((goal, index) => {
+      const finished = dogs[currentDog].finishedGoals;
+
+      goals.forEach((goal, goalIndex) => {
         const li = document.createElement("li");
         li.innerHTML = `
           <strong>${goal.name}</strong><br>
           ${goal.description}<br>
+          <div class="progress-bar">
+            <div class="progress-bar-inner" style="width: ${goal.completedSubgoals / goal.subgoals.length * 100 || 0}%"></div>
+          </div>
+          <button class="button" onclick="markGoalAsFinished(${goalIndex})">Klarmarkera mål</button>
+          <ul class="subgoal">
+            ${goal.subgoals.map((subgoal, subgoalIndex) => `
+              <li>
+                <input type="checkbox" onchange="toggleSubgoal(${goalIndex}, ${subgoalIndex})" ${subgoal.completed ? "checked" : ""}>
+                ${subgoal.name}
+              </li>
+            `).join('')}
+          </ul>
+          <button class="button" onclick="addSubgoal(${goalIndex})">Lägg till delmål</button>
         `;
-        const deleteButton = document.createElement("button");
-        deleteButton.textContent = "Ta bort";
-        deleteButton.classList.add("button", "delete-button");
-        deleteButton.style.marginTop = "10px";
-        deleteButton.addEventListener("click", () => {
-          goals.splice(index, 1);
-          saveDogsToLocalStorage();
-          loadGoals();
-        });
-        li.appendChild(deleteButton);
         goalList.appendChild(li);
       });
+
+      finished.forEach((goal) => {
+        const li = document.createElement("li");
+        li.innerHTML = `<strong>${goal.name}</strong><br>${goal.description}`;
+        finishedGoals.appendChild(li);
+      });
+    }
+
+    function toggleSubgoal(goalIndex, subgoalIndex) {
+      const goal = dogs[currentDog].goals[goalIndex];
+      const subgoal = goal.subgoals[subgoalIndex];
+      subgoal.completed = !subgoal.completed;
+
+      goal.completedSubgoals = goal.subgoals.filter(sub => sub.completed).length;
+      saveDogsToLocalStorage();
+      loadGoals();
+    }
+
+    function markGoalAsFinished(goalIndex) {
+      const goal = dogs[currentDog].goals.splice(goalIndex, 1)[0];
+      dogs[currentDog].finishedGoals.push(goal);
+      saveDogsToLocalStorage();
+      showFireworks();
+      loadGoals();
+    }
+
+    function showFireworks() {
+      const fireworks = document.getElementById("fireworks");
+      fireworks.style.display = "block";
+      setTimeout(() => {
+        fireworks.style.display = "none";
+      }, 3000);
+    }
+
+    function addSubgoal(goalIndex) {
+      const subgoalName = prompt("Ange namn på delmålet:");
+      if (!subgoalName) return;
+
+      const goal = dogs[currentDog].goals[goalIndex];
+      goal.subgoals.push({ name: subgoalName, completed: false });
+      saveDogsToLocalStorage();
+      loadGoals();
     }
 
     document.getElementById("addGoalButton").addEventListener("click", () => {
@@ -161,19 +256,17 @@
       }
 
       if (!dogs[currentDog]) {
-        dogs[currentDog] = { goals: [] };
+        dogs[currentDog] = { goals: [], finishedGoals: [] };
       }
 
-      dogs[currentDog].goals.push({ name: goalName, description: goalDescription });
+      dogs[currentDog].goals.push({ name: goalName, description: goalDescription, subgoals: [], completedSubgoals: 0 });
       saveDogsToLocalStorage();
       loadGoals();
 
-      // Rensa fälten
       document.getElementById("goalName").value = "";
       document.getElementById("goalDescription").value = "";
     });
 
-    // Ladda mål vid sidladdning
     loadGoals();
   </script>
 </body>
